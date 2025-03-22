@@ -1,0 +1,73 @@
+name: Deploy to Railway
+
+on:
+  # Gatilho para push direto no repositório
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/railway-deploy.yml'
+  
+  # Gatilho para execução manual via interface web
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Motivo do deploy manual'
+        required: false
+        default: 'Deploy manual via interface web'
+  
+  # Gatilho para quando arquivos são criados/editados via interface web
+  create:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+        
+      - name: Lint and test
+        working-directory: ./backend
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+          
+      - name: Verify authentication setup
+        working-directory: ./backend
+        run: |
+          if grep -q "jsonwebtoken" package.json && grep -q "bcryptjs" package.json; then
+            echo "✅ Authentication dependencies found"
+          else
+            echo "❌ Authentication dependencies missing"
+            exit 1
+          fi
+          
+          if [ -f "routes/auth.js" ] && [ -f "middleware/auth.js" ]; then
+            echo "✅ Authentication files found"
+          else
+            echo "❌ Authentication files missing"
+            exit 1
+          fi
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        working-directory: ./backend
+        run: railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'hope_secret_key_dev' }}

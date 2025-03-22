@@ -5,6 +5,7 @@ O HOPE implementa um processo padronizado para desenvolvimento de novas funciona
 ## 1. Pesquisa e Análise Inicial
 
 Antes de qualquer implementação, é necessário:
+
 - Pesquisar soluções existentes no mercado
 - Analisar viabilidade técnica
 - Identificar requisitos de usuário
@@ -13,6 +14,7 @@ Antes de qualquer implementação, é necessário:
 ## 2. Planejamento Detalhado
 
 Criar um documento de planejamento contendo:
+
 - Escopo da funcionalidade
 - Arquitetura proposta
 - Componentes necessários
@@ -23,6 +25,7 @@ Criar um documento de planejamento contendo:
 ## 3. Prototipagem
 
 Quando aplicável:
+
 - Criar protótipos de interface
 - Desenvolver provas de conceito
 - Validar abordagens técnicas
@@ -31,6 +34,7 @@ Quando aplicável:
 ## 4. Implementação
 
 Durante o desenvolvimento:
+
 - Seguir princípios de TDD (Test-Driven Development)
 - Aderir aos padrões de código estabelecidos
 - Documentar código e APIs
@@ -39,6 +43,7 @@ Durante o desenvolvimento:
 ## 5. Testes
 
 Realizar diversos níveis de testes:
+
 - Testes unitários
 - Testes de integração
 - Testes end-to-end
@@ -48,6 +53,7 @@ Realizar diversos níveis de testes:
 ## 6. Revisão e Refinamento
 
 Antes da entrega:
+
 - Realizar code reviews
 - Refatorar código quando necessário
 - Otimizar performance
@@ -56,6 +62,7 @@ Antes da entrega:
 ## 7. Integração e Deploy
 
 Seguir o processo CI/CD:
+
 - Integrar com a branch principal
 - Executar pipeline de testes automatizados
 - Realizar deploy em ambiente de staging
@@ -64,6 +71,7 @@ Seguir o processo CI/CD:
 ## 8. Monitoramento e Feedback
 
 Após o lançamento:
+
 - Monitorar métricas de uso
 - Coletar feedback dos usuários
 - Identificar oportunidades de melhoria
