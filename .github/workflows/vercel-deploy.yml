@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'frontend/**'
+      - 'Dockerfile'
       - '.github/workflows/vercel-deploy.yml'
   
   # Gatilho para execução manual via interface web
@@ -16,9 +17,7 @@ on:
         required: false
         default: 'Deploy manual via interface web'
   
-  # Gatilho para quando arquivos são criados/editados via interface web
-  create:
-    branches: [main]
+
 
 jobs:
   deploy:
@@ -48,7 +47,7 @@ jobs:
       - name: Verify frontend configuration
         working-directory: ./frontend
         run: |
-          if grep -q "\"homepage\":" package.json; then
+          if grep -q "homepage" package.json; then
             echo "✅ Homepage configurada no package.json"
           else
             echo "⚠️ Homepage não configurada no package.json. Isso pode causar problemas de roteamento no Vercel."
@@ -58,25 +57,8 @@ jobs:
             echo "✅ Arquivo vercel.json encontrado"
           else
             echo "⚠️ Arquivo vercel.json não encontrado. Criando configuração básica..."
-            cat > vercel.json << 'EOLINNER'
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
-    }
-  ],
-  "routes": [
-    { "src": "/static/(.*)", "dest": "/static/$1" },
-    { "src": "/favicon.ico", "dest": "/favicon.ico" },
-    { "src": "/manifest.json", "dest": "/manifest.json" },
-    { "src": "/logo(.*).png", "dest": "/logo$1.png" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
-}
-EOLINNER
+            # Criar vercel.json com configuração básica
+            echo '{"version": 2, "builds": [{"src": "package.json", "use": "@vercel/static-build", "config": {"distDir": "build"}}], "routes": [{"src": "/static/(.*)", "dest": "/static/$1"}, {"src": "/favicon.ico", "dest": "/favicon.ico"}, {"src": "/manifest.json", "dest": "/manifest.json"}, {"src": "/logo(.*).png", "dest": "/logo$1.png"}, {"src": "/(.*)", "dest": "/index.html"}]}' > vercel.json
           fi
 
       - name: Install Vercel CLI
@@ -84,6 +66,6 @@ EOLINNER
 
       - name: Deploy to Vercel
         working-directory: ./frontend
-        run: vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+        run: vercel --prod --token "${{ secrets.VERCEL_TOKEN }}" --yes
         env:
-          REACT_APP_API_URL: ${{ secrets.BACKEND_URL || 'https://hope-api.up.railway.app' }}
+          REACT_APP_API_URL: "${{ secrets.BACKEND_URL || 'https://hope-api.up.railway.app' }}"
