@@ -1,0 +1,54 @@
+# Manual Usage Guide
+
+Welcome to the AgentOS Foundation skeleton! This guide walks you through:
+
+1. Installing prerequisites
+2. Running the system locally via Docker Compose
+3. Checking logs, interacting with RabbitMQ
+
+---
+
+## 1. Prerequisites
+
+- **Docker** (version 20+ recommended)
+- **Docker Compose** (v2+ recommended)
+- (Optional) **Python 3.10+** if you want to run orchestrator locally without Docker.
+
+## 2. Environment Configuration
+
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+In this file, set:
+- `RABBIT_USER` and `RABBIT_PASS`
+- `OPENAI_API_KEY` (optional, if you want Vox to do LLM calls)
+
+## 3. Docker Compose
+To spin everything up:
+```bash
+docker-compose up --build
+```
+
+- `rabbitmq` is your message broker (port 5672, management on 15672)
+- `orchestrator` is the Python Vox skeleton
+- `hello-service` is a sample Node.js service
+
+## 4. Verifying the Setup
+Open your browser at http://localhost:15672.
+Login with `RABBIT_USER:RABBIT_PASS`.
+You should see a queue named `foundation_queue`.
+
+Check the container logs:
+```bash
+docker-compose logs -f orchestrator
+docker-compose logs -f hello-service
+```
+
+You should see the `HELLO_WORLD` event published and a `VOX_ACK` event returned.
+
+## 5. Next Steps
+- Add your own microservices (RFID, media, etc.) in separate folders, each with its own Dockerfile.
+- Update `docker-compose.yml` to include them.
+- If you want to run multiple queues or advanced routing keys, define them in your orchestrator or each service’s code.

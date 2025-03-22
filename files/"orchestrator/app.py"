@@ -1,0 +1,111 @@
+import asyncio
+import json
+import uuid
+import openai
+import aiormq  # async amqp library
+from typing import Callable, Dict
+
+#########################
+# 1. Agent Definitions  #
+#########################
+def video_agent(context: dict) -> str:
+    system_prompt = "You are VideoAgent, specialized in analyzing uploaded videos."
+    user_content = f"Context: {context}. Provide chain-of-thought and final plan in JSON."
+    return run_llm(system_prompt, user_content)
+
+def rfid_agent(context: dict) -> str:
+    system_prompt = "You are RfidAgent, specialized in handling RFID events."
+    user_content = f"Context: {context}. Provide step-by-step reasoning, then final JSON plan."
+    return run_llm(system_prompt, user_content)
+
+AGENT_MAP: Dict[str, Callable[[dict], str]] = {
+    "VIDEO_UPLOADED": video_agent,
+    "RFID_TAG_DETECTED": rfid_agent,
+    # etc. Add more domain events as needed
+}
+
+###############################
+# 2. Generic LLM call function
+###############################
+openai.api_key = "YOUR_OPENAI_API_KEY"
+
+def run_llm(system_prompt: str, user_content: str) -> str:
+    # Synchronous call for simplicity. Could wrap in asyncio if you want.
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        temperature=0.5,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content}
+        ],
+    )
+    return response.choices[0].message.content
+
+#################################
+# 3. Vox Orchestrator (Async I/O)
+#################################
+class VoxOrchestrator:
+    def __init__(self, amqp_url: str = "amqp://guest:guest@localhost:5672/"):
+        self.amqp_url = amqp_url
+        self.logs = []
+
+    async def start(self):
+        # Connect to RabbitMQ
+        self.connection = await aiormq.connect(self.amqp_url)
+        self.channel = await self.connection.channel()
+
+        # Declare / bind a queue to read messages from
+        queue_name = "agentos_queue"
+        await self.channel.queue_declare(queue_name, durable=True)
+        # In a real system, you'd set up exchange and routing keys
+
+        # Start consuming
+        await self.channel.basic_consume(
+            queue_name,
+            self.on_message
+        )
+        print("Vox Orchestrator: waiting for messages...")
+
+    async def on_message(self, message):
+        """Handle incoming messages from the bus."""
+        try:
+            body = message.body.decode()
+            data = json.loads(body)
+            event_type = data.get("eventType")
+            payload = data.get("payload", {})
+            print(f"[VOX] Received event: {event_type} => {payload}")
+
+            # If we have an agent for this event
+            if event_type in AGENT_MAP:
+                result = AGENT_MAP[event_type](payload)
+                self.logs.append({
+                    "id": str(uuid.uuid4()),
+                    "eventType": event_type,
+                    "payload": payload,
+                    "agentOutput": result
+                })
+                print(f"[VOX] Chain-of-Thought from {event_type} sub-agent:\n", result)
+                # Possibly publish next event or call a microservice
+                # ...
+            else:
+                print(f"[VOX] No agent found for event {event_type}, ignoring.")
+
+            # Acknowledge the message
+            await message.channel.basic_ack(message.delivery.delivery_tag)
+
+        except Exception as e:
+            print("[VOX] Error handling message:", e)
+            await message.channel.basic_nack(message.delivery.delivery_tag, requeue=False)
+
+#####################################
+# 4. Main entrypoint to run the loop
+#####################################
+if __name__ == "__main__":
+    orchestrator = VoxOrchestrator()
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(orchestrator.start())
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        loop.stop()
