@@ -2,7 +2,14 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    // Replace <db_password> placeholder with actual password from environment variables
+    let connectionString = process.env.MONGODB_URI;
+    
+    if (connectionString.includes('<db_password>') && process.env.MONGODB_PASSWORD) {
+      connectionString = connectionString.replace('<db_password>', process.env.MONGODB_PASSWORD);
+    }
+    
+    const conn = await mongoose.connect(connectionString, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

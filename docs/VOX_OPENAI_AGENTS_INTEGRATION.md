@@ -7,7 +7,8 @@ Este dossiê apresenta um plano estratégico otimizado para a evolução do Vox 
 ## Arquitetura Proposta
 
 ### Estrutura do Projeto
-```
+
+```text
 vox/
 ├── .env
 ├── Dockerfile
@@ -73,6 +74,7 @@ vox/
 ### Otimização de Custos
 
 #### Estratégia de Switch Inteligente
+
 ```python
 # vox/config/switcher.py
 def choose_model(query: str, context: dict) -> str:
@@ -91,19 +93,22 @@ def choose_model(query: str, context: dict) -> str:
 ```
 
 #### Estimativa de Custos
+
 | Cenário | Usuários/dia | Tokens/conversa | Custo diário (GPT-3.5) | Custo diário (GPT-4) |
 |---------|--------------|-----------------|------------------------|----------------------|
 | Testes internos | 10 | 2k in / 1k out | ~$0.05 | ~$0.30–0.50 |
 | Beta controlado | 50 | 2k in / 1k out | ~$0.25 | ~$1.50–2.50 |
 | Produção média | 200 | 2k in / 1k out | ~$1.00–2.00 | ~$6–10 |
 
-**Exemplo Realista (Vox em produção leve)**
+### Exemplo Realista (Vox em produção leve)
+
 - 100 atendimentos por dia
 - 80% com GPT-3.5, 20% com GPT-4
 - Ferramentas bem distribuídas
 - Infraestrutura hospedada em Railway + Mongo gratuito
 
-**Custo estimado mensal:**
+### Custo estimado mensal
+
 - OpenAI: $20–30
 - Infraestrutura: $0–10
 - Total: ~$30–40/mês
@@ -111,30 +116,34 @@ def choose_model(query: str, context: dict) -> str:
 ## Plano de Implementação Atualizado
 
 ### Fase 1: Análise e Preparação (2-3 semanas)
+
 - Análise detalhada do SDK
 - Prova de conceito com switch inteligente de modelos
 - Planejamento de migração
 
 ### Fase 2: Implementação Inicial (4-6 semanas)
+
 - Adaptação da camada de contexto
 - Integração do loop de agente
 - Implementação de guardrails básicos
 - Configuração do switch inteligente de modelos
 
 ### Fase 3: Recursos Avançados (6-8 semanas)
+
 - Implementação de multi-agentes
 - Integração com WhatsApp e outros canais
 - Personalização e extensão
 - Otimização de custos e desempenho
 
 ### Fase 4: Finalização e Documentação (2-3 semanas)
+
 - Testes abrangentes
 - Documentação completa
 - Treinamento e transição
 
 ## Estratégias de Otimização Adicionais
 
-1. **Prompting Eficiente**
+### Prompting Eficiente
    - Evitar envio de contexto desnecessário
    - Resumir histórico de conversas longas
 
