@@ -1,0 +1,25 @@
+import pytest
+from app import chain_of_thought
+
+def test_chain_of_thought_no_api_key(monkeypatch):
+    """ If no OPENAI_API_KEY is set, the function should return a skip message. """
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    result = chain_of_thought("Test prompt")
+    assert "not set" in result.lower()
+
+def test_chain_of_thought_with_key(monkeypatch):
+    """ We could mock openai.ChatCompletion.create to not actually call. """
+    monkeypatch.setenv("OPENAI_API_KEY", "FAKE_KEY")
+    
+    def mock_create(*args, **kwargs):
+        class MockResponse:
+            choices = [
+                type("", (), {"message": type("", (), {"content": "Mock chain-of-thought output"})()})
+            ]
+        return MockResponse()
+    
+    import openai
+    openai.ChatCompletion.create = mock_create
+    
+    result = chain_of_thought("Hello world")
+    assert "Mock chain-of-thought" in result

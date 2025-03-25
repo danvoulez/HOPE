@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'Dockerfile'
       - '.github/workflows/railway-deploy.yml'
   
   # Gatilho para execução manual via interface web
@@ -65,9 +66,13 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Deploy to Railway
-        working-directory: ./backend
-        run: railway up
+      - name: Build and Deploy to Railway
+        run: |
+          # Construir a imagem Docker
+          docker build -t hope:latest .
+          
+          # Deploy para Railway usando a imagem Docker
+          railway up --dockerfile Dockerfile
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'hope_secret_key_dev' }}

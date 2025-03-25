@@ -1,0 +1,61 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: Install Docker Compose
+        run: sudo apt-get update && sudo apt-get install docker-compose -y
+
+      # 1) Unit tests for orchestrator
+      - name: Install orchestrator deps
+        working-directory: orchestrator
+        run: |
+          pip install -r requirements.txt pytest
+
+      - name: Run orchestrator unit tests
+        working-directory: orchestrator
+        run: pytest --maxfail=1 --disable-warnings
+
+      # 2) Unit tests for hello-service
+      - name: Install hello-service deps
+        working-directory: hello-service
+        run: |
+          npm install
+          npm run test
+
+      # 3) Build Docker images
+      - name: Build Docker images
+        run: docker-compose build
+
+      # 4) Integration test
+      #    We'll spin up containers in the background, wait, then verify logs or something.
+      - name: Run Docker Compose integration test
+        run: |
+          docker-compose up -d
+          # Wait for services to be healthy
+          # In a real scenario, you'd do a "curl" to some endpoint or parse logs
+          sleep 15
+          # Sample log check for "VOX_ACK"
+          docker-compose logs hello-service | grep "VOX_ACK"
+
+      # 5) (Optional) Publish images to Docker Hub or GHCR
+      #    We'll skip it here for brevity.

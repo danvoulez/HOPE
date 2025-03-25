@@ -1,0 +1,66 @@
+// hello-service/index.js
+import express from 'express';
+import amqplib from 'amqplib';
+
+const app = express();
+app.use(express.json());
+
+const AMQP_URL = process.env.AMQP_URL || 'amqp://guest:guest@localhost:5672/';
+const QUEUE = 'agentos_queue';
+
+async function connectRabbit() {
+  const connection = await amqplib.connect(AMQP_URL);
+  const channel = await connection.createChannel();
+  console.log('RabbitMQ connected');
+
+  await channel.assertQueue(QUEUE, { durable: true });
+
+  return { connection, channel };
+}
+
+async function publishEvent(channel, eventType, payload) {
+  const event = {
+    eventType,
+    payload,
+    timestamp: new Date().toISOString(),
+  };
+  const buffer = Buffer.from(JSON.stringify(event));
+  await channel.sendToQueue(QUEUE, buffer, { persistent: true });
+  console.log(`[HELLO-SERVICE] Published event: ${eventType}`);
+}
+
+async function consumeEvents(channel) {
+  await channel.consume(QUEUE, (msg) => {
+    if (msg !== null) {
+      const event = JSON.parse(msg.content.toString());
+      console.log(`[HELLO-SERVICE] Received event: ${event.eventType} => ${event.payload}`);
+      channel.ack(msg);
+
+      // Example: responding to a specific event
+      if (event.eventType === 'VOX_ACK') {
+        console.log('[HELLO-SERVICE] Acknowledgment received from Vox Orchestrator');
+      }
+    }
+  }, { noAck: false });
+}
+
+async function main() {
+  const { connection, channel } = await connectRabbit();
+
+  // Publish a "HELLO_WORLD" event on startup
+  await publishEvent(channel, 'HELLO_WORLD', { message: 'Hello from Hello-Service!' });
+
+  // Start consuming events
+  await consumeEvents(channel);
+
+  // Gracefully close the connection on process exit
+  process.on('exit', () => {
+    connection.close();
+    console.log('RabbitMQ connection closed');
+  });
+}
+
+app.listen(3000, () => {
+  console.log('Hello-Service running on port 3000');
+  main().catch(console.error);
+});

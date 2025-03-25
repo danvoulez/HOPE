@@ -37,9 +37,12 @@ if (NODE_ENV === 'production') {
 
 // Importar rotas de autenticação
 const authRoutes = require('./routes/auth');
+// Importar rotas de webhooks
+const webhookRoutes = require('./routes/webhooks');
 
 // Rotas da API
 app.use('/api/auth', authRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 

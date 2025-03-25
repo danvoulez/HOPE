@@ -1,0 +1,23 @@
+// index.js (RFID Service)
+import express from "express";
+import { connectRabbit, publishEvent } from "./rabbitHelper.js";
+
+const app = express();
+app.use(express.json());
+
+const RABBIT_URL = process.env.RABBIT_URL || "amqp://localhost";
+const EXCHANGE = "agentos_exchange"; // or "amq.topic"
+
+app.post("/tag-read", async (req, res) => {
+  // Example: We read an RFID tag from hardware
+  // Then we publish an event to the bus
+  const { tagId, location } = req.body;
+  if (!tagId) {
+    return res.status(400).json({ error: "Missing tagId" });
+  }
+
+  // Publish "RFID_TAG_DETECTED" event
+  await publishEvent(EXCHANGE, "RFID.TAG.DETECTED", {
+    eventType: "RFID_TAG_DETECTED",
+    payload: { tagId, location },
+    timestamp: new Date().

@@ -1,0 +1,8 @@
+// hello-service/tests/test_index.js
+import { strict as assert } from "assert";
+
+describe("Hello Service Basics", function() {
+  it("should do a trivial test", function() {
+    assert.equal(1 + 1, 2);
+  });
+});

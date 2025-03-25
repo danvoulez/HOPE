@@ -1,0 +1,29 @@
+// rabbitHelper.js
+import amqplib from 'amqplib';
+
+let connection, channel;
+
+export async function connectRabbit(rabbitUrl) {
+  connection = await amqplib.connect(rabbitUrl);
+  channel = await connection.createChannel();
+  console.log("RabbitMQ connected");
+}
+
+export async function publishEvent(exchange, routingKey, msg) {
+  // For direct or topic exchange
+  if (!channel) throw new Error("Channel not initialized");
+  const payload = Buffer.from(JSON.stringify(msg));
+  channel.publish(exchange, routingKey, payload, { persistent: true });
+}
+
+export async function consumeEvent(queue, onMessage) {
+  if (!channel) throw new Error("Channel not initialized");
+  await channel.assertQueue(queue, { durable: true });
+  channel.consume(queue, async (msg) => {
+    if (msg) {
+      const data = JSON.parse(msg.content.toString());
+      await onMessage(data);
+      channel.ack(msg);
+    }
+  });
+}
